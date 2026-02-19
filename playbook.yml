@@ -1,0 +1,82 @@
+---
+# Linux Lab Full Automation - Main playbook
+# Usage: ansible-playbook -i inventory.yaml playbook.yml -u a25timfa -k
+# Ensure vars.yaml is set (login, room, group, password).
+
+- name: Common setup (all VMs)
+  hosts: ns1,ns2,mail,webmail,mgmt
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  roles:
+    - common
+
+- name: Network configuration (all VMs)
+  hosts: ns1,ns2,mail,webmail,mgmt
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  roles:
+    - network
+
+- name: DNS master (ns1)
+  hosts: ns1
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  roles:
+    - role: dns
+      dns_role: master
+
+- name: DNS slave (ns2)
+  hosts: ns2
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  roles:
+    - role: dns
+      dns_role: slave
+
+- name: Mail server
+  hosts: mail
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  roles:
+    - mail
+
+- name: Webmail server
+  hosts: webmail
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  roles:
+    - webmail
+
+- name: Ensure SSH key on mgmt and fetch to control node
+  hosts: mgmt
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Ensure mgmt user has SSH key
+      ansible.builtin.user:
+        name: "{{ mgmt_user }}"
+        generate_ssh_key: true
+        ssh_key_type: ed25519
+        ssh_key_comment: "{{ mgmt_user }}@mgmt"
+    - name: Fetch mgmt public key to control node
+      ansible.builtin.fetch:
+        src: "/home/{{ mgmt_user }}/.ssh/id_ed25519.pub"
+        dest: "{{ playbook_dir }}"
+        flat: true
+
+- name: SSH key distribution (mgmt -> servers)
+  hosts: ns1,ns2,mail,webmail
+  remote_user: "{{ mgmt_user }}"
+  vars_files:
+    - vars.yaml
+  vars:
+    mgmt_pubkey_file: "{{ playbook_dir }}/id_ed25519.pub"
+  roles:
+    - ssh

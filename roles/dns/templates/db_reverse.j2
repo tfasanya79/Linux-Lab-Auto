@@ -1,0 +1,16 @@
+$TTL 300
+@   IN  SOA ns1 root.{{ domain }}. (
+    {{ ansible_date_time.epoch }}  ; Serial
+    30m         ; Refresh
+    3m          ; Retry
+    2w          ; Expire
+    1h          ; Negative Cache TTL
+    )
+    IN  NS  ns1.{{ domain }}.
+    IN  NS  ns2.{{ domain }}.
+
+11  IN  PTR ns1.{{ domain }}.
+12  IN  PTR ns2.{{ domain }}.
+20  IN  PTR mail.{{ domain }}.
+21  IN  PTR webmail.{{ domain }}.
+22  IN  PTR mgmt.{{ domain }}.

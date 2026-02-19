@@ -1,0 +1,38 @@
+---
+# Deploy mgmt's public key to root@server so mgmt user can ssh root@server without password.
+# Playbook must run "Ensure SSH key on mgmt and fetch" first so mgmt_pubkey_file exists.
+
+- name: Read mgmt public key from control node
+  ansible.builtin.slurp:
+    src: "{{ mgmt_pubkey_file }}"
+  register: mgmt_pubkey_read
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Set mgmt public key content
+  ansible.builtin.set_fact:
+    mgmt_pubkey_content: "{{ mgmt_pubkey_read.content | b64decode }}"
+  run_once: true
+
+- name: Ensure root .ssh directory on server
+  ansible.builtin.file:
+    path: /root/.ssh
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Deploy mgmt public key to root authorized_keys
+  ansible.builtin.authorized_key:
+    user: root
+    key: "{{ mgmt_pubkey_content }}"
+    state: present
+
+- name: Ensure PermitRootLogin allows publickey
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin prohibit-password"
+    state: present
+  notify: Restart sshd

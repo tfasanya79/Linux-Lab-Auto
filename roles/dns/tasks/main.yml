@@ -1,0 +1,69 @@
+---
+- name: Install Bind9
+  ansible.builtin.apt:
+    name: bind9
+    state: present
+
+- name: Deploy named.conf.options
+  ansible.builtin.template:
+    src: named.conf.options.j2
+    dest: /etc/bind/named.conf.options
+    owner: root
+    group: bind
+    mode: "0644"
+
+- name: Deploy named.conf.local (master)
+  ansible.builtin.template:
+    src: named.conf.local_master.j2
+    dest: /etc/bind/named.conf.local
+    owner: root
+    group: bind
+    mode: "0644"
+  when: dns_role == "master"
+
+- name: Deploy named.conf.local (slave)
+  ansible.builtin.template:
+    src: named.conf.local_slave.j2
+    dest: /etc/bind/named.conf.local
+    owner: root
+    group: bind
+    mode: "0644"
+  when: dns_role == "slave"
+
+- name: Deploy forward zone db.{{ login }} (master only)
+  ansible.builtin.template:
+    src: db_forward.j2
+    dest: "/etc/bind/db.{{ login }}"
+    owner: root
+    group: bind
+    mode: "0644"
+  when: dns_role == "master"
+
+- name: Deploy reverse zone db.10 (master only)
+  ansible.builtin.template:
+    src: db_reverse.j2
+    dest: /etc/bind/db.10
+    owner: root
+    group: bind
+    mode: "0644"
+  when: dns_role == "master"
+
+- name: Check forward zone syntax (master)
+  ansible.builtin.command:
+    cmd: "named-checkzone {{ domain }} /etc/bind/db.{{ login }}"
+  register: zone_fwd_check
+  changed_when: false
+  when: dns_role == "master"
+
+- name: Check reverse zone syntax (master)
+  ansible.builtin.command:
+    cmd: "named-checkzone {{ reverse_zone }} /etc/bind/db.10"
+  register: zone_rev_check
+  changed_when: false
+  when: dns_role == "master"
+
+- name: Restart Bind9
+  ansible.builtin.service:
+    name: bind9
+    state: restarted
+    enabled: true

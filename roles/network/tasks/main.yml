@@ -1,0 +1,30 @@
+---
+- name: Deploy /etc/hosts
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy /etc/network/interfaces
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy /etc/resolv.conf
+  ansible.builtin.template:
+    src: resolv.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Restart networking
+  ansible.builtin.service:
+    name: networking
+    state: restarted
+  when: ansible_os_family == "Debian"

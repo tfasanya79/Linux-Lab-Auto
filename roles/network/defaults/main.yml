@@ -1,0 +1,7 @@
+# Student-manual-2026v1.0 Table 1: mail=.20, webmail=.21
+host_last_octet:
+  ns1: 11
+  ns2: 12
+  mail: 20
+  webmail: 21
+  mgmt: 22

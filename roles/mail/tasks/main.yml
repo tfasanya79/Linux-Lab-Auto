@@ -1,0 +1,99 @@
+---
+- name: Set Postfix debconf (non-interactive)
+  ansible.builtin.debconf:
+    name: postfix
+    question: "{{ item.question }}"
+    value: "{{ item.value }}"
+    vtype: "{{ item.vtype | default('string') }}"
+  loop:
+    - { question: "postfix/main_mailer_type", value: "Internet Site", vtype: "select" }
+    - { question: "postfix/mailname", value: "{{ domain }}", vtype: "string" }
+
+- name: Install Postfix and Dovecot
+  ansible.builtin.apt:
+    name:
+      - postfix
+      - dovecot-core
+      - dovecot-imapd
+    state: present
+
+- name: Ensure Postfix key settings in main.cf
+  ansible.builtin.lineinfile:
+    path: /etc/postfix/main.cf
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} = {{ item.value }}"
+    state: present
+  loop:
+    - { key: "myhostname", value: "mail.{{ domain }}" }
+    - { key: "mydomain", value: "{{ domain }}" }
+    - { key: "myorigin", value: "$mydomain" }
+    - { key: "inet_interfaces", value: "all" }
+    - { key: "mydestination", value: "$myhostname, localhost.$mydomain, $mydomain" }
+    - { key: "mynetworks", value: "127.0.0.0/8, [::1]/128, 10.{{ room }}.{{ group }}.0/24" }
+    - { key: "smtpd_recipient_restrictions", value: "permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination" }
+    - { key: "home_mailbox", value: "Maildir/" }
+  notify: restart postfix
+
+- name: Set Dovecot protocols
+  ansible.builtin.lineinfile:
+    path: /etc/dovecot/dovecot.conf
+    regexp: "^protocols ="
+    line: "protocols = imap"
+    state: present
+  notify: restart dovecot
+
+- name: Deploy Dovecot 10-mail.conf override
+  ansible.builtin.lineinfile:
+    path: /etc/dovecot/conf.d/10-mail.conf
+    regexp: "^mail_location ="
+    line: "mail_location = maildir:~/Maildir"
+    state: present
+  notify: restart dovecot
+
+- name: Deploy Dovecot 10-auth.conf overrides
+  ansible.builtin.lineinfile:
+    path: /etc/dovecot/conf.d/10-auth.conf
+    regexp: "^{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: "^disable_plaintext_auth =", line: "disable_plaintext_auth = no" }
+    - { regexp: "^auth_mechanisms =", line: "auth_mechanisms = plain login" }
+  notify: restart dovecot
+
+- name: Create mail users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    password: "{{ password | password_hash('sha512') }}"
+    shell: /bin/bash
+    create_home: true
+    home: "/home/{{ item.name }}"
+  loop: "{{ mail_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Deploy /etc/aliases
+  ansible.builtin.template:
+    src: aliases.j2
+    dest: /etc/aliases
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Run newaliases
+  ansible.builtin.command: newaliases
+
+- name: Flush handlers (Postfix/Dovecot)
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure Postfix running
+  ansible.builtin.service:
+    name: postfix
+    state: started
+    enabled: true
+
+- name: Ensure Dovecot running
+  ansible.builtin.service:
+    name: dovecot
+    state: started
+    enabled: true

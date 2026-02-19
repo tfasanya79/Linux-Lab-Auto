@@ -1,0 +1,1 @@
+mgmt_pubkey_file: "{{ playbook_dir | default('.') }}/id_ed25519.pub"

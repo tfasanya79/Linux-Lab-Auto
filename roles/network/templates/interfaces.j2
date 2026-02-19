@@ -1,0 +1,10 @@
+# Loopback
+auto lo
+iface lo inet loopback
+
+# Primary interface (Debian: often eth0 or ens18)
+auto eth0
+iface eth0 inet static
+    address 10.{{ room }}.{{ group }}.{{ host_last_octet[inventory_hostname] }}/24
+    netmask 255.255.255.0
+    gateway 10.{{ room }}.{{ group }}.1

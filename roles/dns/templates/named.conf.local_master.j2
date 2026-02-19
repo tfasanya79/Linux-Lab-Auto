@@ -1,0 +1,11 @@
+zone "{{ reverse_zone }}" {
+    type master;
+    file "/etc/bind/db.10";
+    allow-transfer { 10.{{ room }}.{{ group }}.12; };
+};
+
+zone "{{ domain }}" {
+    type master;
+    file "/etc/bind/db.{{ login }}";
+    allow-transfer { 10.{{ room }}.{{ group }}.12; };
+};

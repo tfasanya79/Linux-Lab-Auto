@@ -1,0 +1,6 @@
+# Mail aliases - full email -> local user
+postmaster: root
+webmaster: root
+{% for u in mail_users %}
+{{ u.full }}@{{ domain }}: {{ u.name }}
+{% endfor %}

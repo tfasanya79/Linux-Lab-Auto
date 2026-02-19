@@ -1,0 +1,15 @@
+# Student-manual-2026v1.0 Table 1: mail=.20, webmail=.21 (a25timfa, room 204, group 2)
+all:
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  hosts:
+    ns1:
+      ansible_host: 10.204.2.11
+    ns2:
+      ansible_host: 10.204.2.12
+    mail:
+      ansible_host: 10.204.2.20
+    webmail:
+      ansible_host: 10.204.2.21
+    mgmt:
+      ansible_host: 10.204.2.22

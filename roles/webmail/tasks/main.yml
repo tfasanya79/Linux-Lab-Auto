@@ -1,0 +1,79 @@
+---
+- name: Set Roundcube DB password
+  ansible.builtin.set_fact:
+    rc_db_password: "{{ roundcube_db_password if (roundcube_db_password | default('') | length > 0) else (lookup('password', '/tmp/rc_db_pass length=24 chars=ascii_letters,digits') | trim) }}"
+
+- name: Set Roundcube des_key
+  ansible.builtin.set_fact:
+    rc_des_key: "{{ roundcube_des_key if (roundcube_des_key | default('') | length > 0) else (lookup('password', '/tmp/rc_des_key length=24 chars=ascii_letters,digits') | trim) }}"
+
+- name: Install MariaDB server
+  ansible.builtin.apt:
+    name: mariadb-server
+    state: present
+
+- name: Set Roundcube debconf (database)
+  ansible.builtin.debconf:
+    name: roundcube-core
+    question: "{{ item.question }}"
+    value: "{{ item.value }}"
+    vtype: "{{ item.vtype | default('string') }}"
+  loop:
+    - { question: "roundcube-core/dbconfig-install", value: "true", vtype: "boolean" }
+    - { question: "roundcube-core/database-type", value: "mysql", vtype: "select" }
+    - { question: "roundcube-core/mysql/admin-pass", value: "", vtype: "password" }
+    - { question: "roundcube-core/mysql/app-pass", value: "{{ rc_db_password }}", vtype: "password" }
+    - { question: "roundcube-core/db/app-user", value: "roundcube", vtype: "string" }
+    - { question: "roundcube-core/db/dbname", value: "roundcube", vtype: "string" }
+
+- name: Install Roundcube and Apache/PHP
+  ansible.builtin.apt:
+    name:
+      - roundcube
+      - roundcube-mysql
+    state: present
+
+- name: Set Roundcube IMAP/SMTP and security in config.inc.php
+  ansible.builtin.lineinfile:
+    path: /etc/roundcube/config.inc.php
+    regexp: "^{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: "\\$config\\['default_host'\\]", line: "$config['default_host'] = 'mail.{{ domain }}';" }
+    - { regexp: "\\$config\\['default_port'\\]", line: "$config['default_port'] = 143;" }
+    - { regexp: "\\$config\\['smtp_server'\\]", line: "$config['smtp_server'] = 'mail.{{ domain }}';" }
+    - { regexp: "\\$config\\['smtp_port'\\]", line: "$config['smtp_port'] = 25;" }
+    - { regexp: "\\$config\\['db_dsnw'\\]", line: "$config['db_dsnw'] = 'mysql://roundcube:{{ rc_db_password }}@localhost/roundcube';" }
+    - { regexp: "\\$config\\['des_key'\\]", line: "$config['des_key'] = '{{ rc_des_key }}';" }
+  notify: Reload Apache
+
+- name: Deploy Apache webmail vhost
+  ansible.builtin.template:
+    src: webmail.conf.j2
+    dest: "/etc/apache2/sites-available/webmail.conf"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable webmail site
+  ansible.builtin.command: a2ensite webmail
+  changed_when: true
+  notify: Reload Apache
+
+- name: Enable Apache mod_rewrite
+  ansible.builtin.apache2_module:
+    name: rewrite
+    state: present
+
+- name: Reload Apache
+  ansible.builtin.service:
+    name: apache2
+    state: reloaded
+  when: not ansible_check_mode
+
+- name: Ensure Apache running
+  ansible.builtin.service:
+    name: apache2
+    state: started
+    enabled: true

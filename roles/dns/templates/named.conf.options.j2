@@ -1,0 +1,21 @@
+options {
+    directory "/var/cache/bind";
+
+{% if lab_environment == 'lab' %}
+    forwarders {
+        10.0.252.201;
+        10.0.252.202;
+    };
+{% else %}
+    forwarders {
+        8.8.8.8;
+        1.1.1.1;
+    };
+{% endif %}
+
+    dnssec-validation auto;
+    auth-nxdomain no;
+    listen-on-v6 { any; };
+    allow-query { any; };
+    allow-recursion { 127/8; 10.{{ room }}.{{ group }}.0/24; };
+};

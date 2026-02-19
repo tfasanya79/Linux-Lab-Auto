@@ -1,0 +1,28 @@
+# Linux Lab Automation - Assignment variables
+# a25timfa, Room 204, Group 2
+
+login: a25timfa
+room: 204
+group: 2
+password: Syp9393!
+mgmt_user: a25timfa
+domain: a25timfa.it387g.nsa.his.se
+reverse_zone: 2.204.10.in-addr.arpa
+
+# Derived IPs per student-manual-2026v1.0 Table 1 (do not edit unless changing room/group)
+# ns1=10.204.2.11, ns2=10.204.2.12, mail=10.204.2.20, webmail=10.204.2.21, mgmt=10.204.2.22
+
+# lab = use NSA nameservers 10.0.252.201/202; home = use 8.8.8.8, 1.1.1.1
+lab_environment: lab
+
+# Mail users (Table 3)
+mail_users:
+  - { name: lism, full: "liam.smith" }
+  - { name: oljo, full: "olivia.johnson" }
+  - { name: etbr, full: "ethan.brown" }
+  - { name: mida, full: "mia.davis" }
+  - { name: lumi, full: "lucas.miller" }
+
+# Roundcube (set or leave empty to generate at run time)
+roundcube_db_password: ""
+roundcube_des_key: ""

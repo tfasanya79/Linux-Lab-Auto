@@ -1,0 +1,5 @@
+id_ed25519.pub
+.mgmt_pubkey.pub
+*.pyc
+.vagrant/
+*.log

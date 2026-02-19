@@ -1,0 +1,19 @@
+# Copy to vars.yaml and set your values
+login: a25timfa
+room: 204
+group: 2
+password: Syp9393!
+mgmt_user: a25timfa
+domain: a25timfa.it387g.nsa.his.se
+reverse_zone: 2.204.10.in-addr.arpa
+lab_environment: lab
+
+mail_users:
+  - { name: lism, full: "liam.smith" }
+  - { name: oljo, full: "olivia.johnson" }
+  - { name: etbr, full: "ethan.brown" }
+  - { name: mida, full: "mia.davis" }
+  - { name: lumi, full: "lucas.miller" }
+
+roundcube_db_password: ""
+roundcube_des_key: ""

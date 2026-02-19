@@ -1,0 +1,11 @@
+zone "{{ reverse_zone }}" {
+    type slave;
+    masters { 10.{{ room }}.{{ group }}.11; };
+    file "/var/cache/bind/db.10";
+};
+
+zone "{{ domain }}" {
+    type slave;
+    masters { 10.{{ room }}.{{ group }}.11; };
+    file "/var/cache/bind/db.{{ login }}";
+};
