@@ -64,7 +64,7 @@ At the end, you must show a supervisor:
 
 - **Always work from mgmt via SSH**, not Proxmox console, except when absolutely necessary.
 - **Keep logs open** in another terminal:
-  - Example: `sudo journalctl -u bind9 -n 20` for DNS troubleshooting.
+  - Example: `sudo journalctl -u named -n 20` for DNS troubleshooting.
   - Or: `sudo journalctl -f -u postfix` when debugging mail.
 - **Take notes and copy configs** as you go for your report.
 - Always use the password: **`Syp9393!`** (for all accounts as required by the manual).
@@ -169,6 +169,11 @@ Your DNS setup provides:
 - A **master** DNS server (`ns1`) and a **slave** DNS server (`ns2`).
 - Recursive queries only allowed from your internal network `10.204.2.0/24`.
 
+### Lab / Debian version notes
+
+- **DNS service name:** On current Debian (11+), the DNS daemon’s systemd unit is usually **`named`**. This guide uses `systemctl start named`, `journalctl -u named`, etc. If your system only recognises `bind9`, use that instead.
+- **Dovecot:** If a Dovecot setting seems to have no effect, check that the line is **uncommented** and that there are no duplicate lines. Run `dovecot -n` to see the effective configuration.
+
 ### 3.1 Install Bind9 and tools on ns1
 
 From mgmt:
@@ -178,10 +183,12 @@ ssh root@10.204.2.11   # ns1
 apt update
 apt upgrade -y
 apt install -y bind9 bind9utils bind9-dnsutils
-systemctl enable bind9
-systemctl start bind9
-systemctl status bind9   # Check that it is 'active (running)'
+systemctl enable named
+systemctl start named
+systemctl status named   # Check that it is 'active (running)'
 ```
+
+> **Note:** On Debian 11+, the DNS service unit is usually **`named`**. If your system uses the legacy unit name, use `bind9` instead (e.g. `systemctl start bind9`).
 
 Press `q` to exit the status view.
 
@@ -342,9 +349,9 @@ named-checkzone 2.204.10.in-addr.arpa /etc/bind/db.10
 If they say `OK`, restart Bind9:
 
 ```bash
-systemctl restart bind9
-systemctl status bind9
-journalctl -u bind9 -n 20
+systemctl restart named
+systemctl status named
+journalctl -u named -n 20
 ```
 
 Resolve any syntax errors reported in the logs, then repeat the checks.
@@ -415,9 +422,9 @@ zone "a25timfa.it387g.nsa.his.se" {
 Save, then:
 
 ```bash
-systemctl restart bind9
-systemctl status bind9
-journalctl -u bind9 -n 20
+systemctl restart named
+systemctl status named
+journalctl -u named -n 20
 ```
 
 Look for lines that indicate successful **zone transfer** (AXFR) from `10.204.2.11`.
@@ -584,34 +591,52 @@ Now e‑mails sent to `olivia.johnson@a25timfa.it387g.nsa.his.se` are delivered 
 
 ### 4.5 Configure Dovecot for Maildir IMAP
 
-Set the mail storage format:
+Default Dovecot configs often have the relevant lines commented out or set to other values. **Find and edit** (uncomment or replace) as below.
 
-```bash
-nano /etc/dovecot/conf.d/10-mail.conf
-```
+#### 10-mail.conf (mail storage)
 
-Ensure:
+1. Open the file:
 
-```text
-mail_location = maildir:~/Maildir
-```
+   ```bash
+   nano /etc/dovecot/conf.d/10-mail.conf
+   ```
 
-Save.
+2. **Find** the line that contains `mail_location` (it may be commented with `#` and may show something like `mbox:~/mail:INBOX=...`).
+3. **Uncomment** it if needed and set it to exactly:
 
-Then configure authentication:
+   ```text
+   mail_location = maildir:~/Maildir
+   ```
 
-```bash
-nano /etc/dovecot/conf.d/10-auth.conf
-```
+4. If there is no such line, add it. Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).
 
-Make sure you have:
+#### 10-auth.conf (authentication)
 
-```text
-disable_plaintext_auth = no
-auth_mechanisms = plain login
-```
+1. Open the file:
 
-Save and restart Dovecot:
+   ```bash
+   nano /etc/dovecot/conf.d/10-auth.conf
+   ```
+
+2. **Find** the line for `disable_plaintext_auth` (may be commented). Set it to:
+
+   ```text
+   disable_plaintext_auth = no
+   ```
+
+   Uncomment if necessary; ensure only one such line exists.
+
+3. **Find** the line for `auth_mechanisms` (may be commented). Set it to:
+
+   ```text
+   auth_mechanisms = plain login
+   ```
+
+   Uncomment if necessary; ensure only one such line exists.
+
+4. Save and exit.
+
+#### Restart and check Dovecot
 
 ```bash
 systemctl restart dovecot
