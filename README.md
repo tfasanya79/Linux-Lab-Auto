@@ -28,10 +28,11 @@ Automation for the Linux Administration (IT387G) lab assignment at University of
    Set `login`, `room`, `group`, `password`, and optionally `roundcube_db_password` / `roundcube_des_key`.
 
 2. **Ensure VMs exist and are reachable**  
-   Either create them in Proxmox (or Hyper-V) and install Debian, or use Vagrant:
+   Either create them in Proxmox (or Hyper-V) and install Debian, or use Vagrant for **local practice only**:
    ```bash
    vagrant up
    ```
+   **Vagrant is for local testing only.** The official lab (student-manual-2026v1.0 §2) uses **Proxmox** and **Debian 13 from the Netboot menu**. If you use Vagrant, keep VMs **CLI-only** (no desktop) and match the manual’s VM specs (hostnames, IPs, mandatory packages).
 
 3. **Update `inventory.yaml`** if your IPs differ from 10.204.2.11, .12, .20, .21, .22 (Table 1).
 
@@ -70,12 +71,12 @@ After a successful run you can:
 - `inventory.yaml` – host list and IPs (must match your network).
 - `playbook.yml` – main playbook; applies common, network, dns, mail, webmail, ssh.
 - `roles/` – common, network, dns, mail, webmail, ssh.
-- `Vagrantfile` – optional 5 Debian VMs (VirtualBox) for local testing.
+- `Vagrantfile` – optional 5 Debian VMs (VirtualBox) for **local practice only**; lab submission uses Proxmox + Debian 13 from Netboot. VMs must be CLI-only per manual §2.2.
 
 ## School lab (student-manual-2026v1.0)
 
-- **Left computer:** Netboot (management client). Use it to open docs, Canvas, and SSH to VMs. Mgmt IP is 10.[room].[group].22.
-- **Right computer:** Proxmox host at 10.[room].[group].10 (https://10.[room].[group].10:8006, root / Syp9393!).
+- **Left computer:** Netboot (management client). Use it to open docs, Canvas, and SSH to VMs. Mgmt IP is 10.204.2.22 (room=204, group=2).
+- **Right computer:** Proxmox host at 10.204.2.10 (https://10.204.2.10:8006, root / Syp9393!).
 - **VMs:** Create four VMs (ns1, ns2, mail, webmail) per Table 1: IPs .11, .12, .20, .21; 2/2/2/4 GB RAM; 20 GB disk; local-zfs; Qemu agent enabled. Install **Debian 13** from Netboot (Installers → Linux → Debian 13 amd64). Use university login as username and password Syp9393!; SSH Server + Standard system utilities only; sudo configured.
 - **Run automation:** From the Netboot machine (or a machine that can reach the VMs), clone this repo, set `vars.yaml`, then run the playbook with `-u a25timfa -k`. Ensure all four VMs and the mgmt client (e.g. Netboot) use the IPs above so DNS and mail match the manual.
 

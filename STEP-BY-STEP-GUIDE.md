@@ -52,9 +52,11 @@ You will set up a complete email system for a small company with:
 
 ### What You Need Before Starting
 
-- **University login:** Your student username (e.g., `a25timfa`)
-- **Room number:** The lab room you're assigned to (e.g., `204`)
-- **Group number:** Your computer group number (e.g., `2`)
+**Your assignment:** login=`a25timfa`, room=`204`, group=`2`. (If your assignment differs, replace these with your [login], [room], [group] from the manual Ch.1.)
+
+- **University login:** `a25timfa`
+- **Room number:** `204`
+- **Group number:** `2`
 - **Password:** `Syp9393!` (with exclamation mark - used for all accounts)
 
 ### What You'll Demonstrate (3 Items)
@@ -78,17 +80,34 @@ A PDF report covering:
 
 ### Your Network Information
 
-Based on your assignment (a25timfa, Room 204, Group 2):
+Your assignment (login=a25timfa, room=204, group=2):
 
 - **Domain:** `a25timfa.it387g.nsa.his.se`
-- **IP Range:** `10.204.2.0/24` (all IPs start with `10.204.2.`)
-- **VM IPs (from Table 1):**
+- **IP Range:** `10.204.2.0/24`
+- **VM IPs (from manual Table 1):**
   - ns1: `10.204.2.11`
   - ns2: `10.204.2.12`
   - mail: `10.204.2.20`
   - webmail: `10.204.2.21`
   - mgmt: `10.204.2.22` (left computer)
 - **Proxmox host:** `10.204.2.10` (right computer)
+
+### Manual compliance checklist
+
+Use this to verify your setup matches the student manual (student-manual-2026v1.0.pdf). Each requirement is from the manual; the guide section where it is applied is listed.
+
+| Manual ref | Requirement | Where in this guide |
+|------------|-------------|---------------------|
+| §2.2 | VMs (ns1, ns2, mail, webmail) have **no GUI** | Part 4: Software selection (uncheck desktop); Step 4.1.21 Verify no GUI |
+| §2.2 | Software limited to **SSH Server** and **Standard system utilities** | Part 4, step 15 (Software selection) |
+| §2.2 | Language **English**, locale **British**, keyboard **Swedish** | Part 4, steps 2–3 (Location: United Kingdom; Keyboard: Swedish) |
+| §2.2 | Hostnames per Table 1 (ns1, ns2, mail, webmail) | Part 4, hostname per VM |
+| §2.2 | Domain `[login].it387g.nsa.his.se` | Part 4, Domain name step |
+| §2.2 | University username as normal user; password `Syp9393!` | Part 4, user account steps |
+| §2.2 | **sudo** configured; verify with `sudo apt update` / `sudo apt upgrade` | Part 4, step 20 |
+| §2.2 | **Qemu guest agent** on VMs; enabled in Proxmox; power off/on to apply | Part 3, Step 3.3; automation installs package |
+| §2.3 | Administer via **SSH** from mgmt, not Proxmox console | Part 5 onwards (run from Netboot/mgmt) |
+| §2.5 Table 2 | Mandatory packages: **vim**, **qemu-guest-agent**, **bind9-dnsutils** | Automation (common role); or install manually if not using playbook |
 
 ---
 
@@ -165,9 +184,9 @@ In the lab, you have **two computers**:
 
 ### Step 2.4: Understanding IP Addressing
 
-Your network uses: `10.[room].[group].x`
+Your network uses: `10.204.2.x` (room=204, group=2)
 
-- **Room 204, Group 2** → `10.204.2.x`
+- **Your assignment:** `10.204.2.x`
 - **Gateway:** `10.204.2.1` (router)
 - **Proxmox:** `10.204.2.10`
 - **VMs:** `.11`, `.12`, `.20`, `.21` (from Table 1)
@@ -286,6 +305,8 @@ For each VM:
 **Time:** 45-60 minutes per VM (about 3-4 hours total)  
 **Goal:** Install Debian 13 on all 4 VMs with correct configuration
 
+> **Manual requirement (Section 2.2):** The student manual states: *"They should not use any GUI"* and *"Software installation should be limited to the SSH Server and Standard system utilities."* The four server VMs (ns1, ns2, mail, webmail) must be **CLI-only** — no desktop or graphical environment. Only the management machine (mgmt, the left computer with Netboot) may have a graphical interface.
+
 ### Step 4.1: Install Debian on ns1
 
 1. **In Proxmox, select ns1 VM**
@@ -302,11 +323,11 @@ For each VM:
    - Press `Enter`
 
 2. **Location:**
-   - Select your country (e.g., `Sweden`)
+   - Select `United Kingdom` (manual §2.2: English with **British locale**)
    - Press `Enter`
 
 3. **Keyboard:**
-   - Select `Swedish` (or your preference)
+   - Select `Swedish` (manual §2.2: **Swedish keyboard**)
    - Press `Enter`
 
 4. **Hostname:**
@@ -358,10 +379,11 @@ For each VM:
     - Press `Enter`
     - Wait for partitioning (30 seconds)
 
-15. **Software selection:**
-    - **Uncheck:** "Debian desktop environment" (use Spacebar to toggle)
+15. **Software selection (manual §2.2 – no GUI):**
+    - **Do not select** "Debian desktop environment" (or any other desktop). Use Spacebar to **uncheck** it if it is checked.
     - **Check:** "SSH server" (use Spacebar to toggle)
     - **Check:** "Standard system utilities" (should already be checked)
+    - Only these two software groups are allowed for the server VMs. No GUI.
     - Press `Tab` to move to "Continue"
     - Press `Enter`
 
@@ -401,6 +423,11 @@ For each VM:
     - Should work without errors
     - Run: `sudo apt upgrade`
     - Type `Y` when prompted
+
+21. **Verify no GUI (manual §2.2):**
+    - Run: `systemctl get-default`
+    - Should show `multi-user.target` (not `graphical.target`). If it shows `graphical.target`, the VM has a GUI and does not meet the manual requirement; reinstall and ensure "Debian desktop environment" is not selected.
+    - Optionally: `dpkg -l | grep -E 'xorg|gnome-desktop|kde-plasma|xfce4-desktop'` should return nothing (no desktop packages).
 
 ### Step 4.2: Install Debian on ns2, mail, webmail
 

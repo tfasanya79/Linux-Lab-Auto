@@ -6,11 +6,13 @@
 **Domain**: `a25timfa.it387g.nsa.his.se`  
 **Network**: `10.204.2.0/24`
 
+> **Important:** This guide is about using the **graphical Netboot desktop on the management machine (mgmt)** only — i.e. what to click and type on the left computer. The **four server VMs (ns1, ns2, mail, webmail) must not have any GUI**. The manual (Section 2.2) requires: *"They should not use any GUI"* and *"Software installation should be limited to the SSH Server and Standard system utilities."* When installing Debian on those VMs, do **not** select any desktop environment.
+
 This document is a **complete, GUI‑oriented guide** for performing the Linux Administration lab described in `student-manual-2026v1.0.pdf`.  
 It is written to be followed **step by step** in the lab environment, with:
 
 - Clear instructions for **what to click** and **what to type**.
-- All values already adapted for **Room 204, Group/System 2, login `a25timfa`**.
+- **Your assignment:** login `a25timfa`, room `204`, group `2`. All examples in this guide use these values.
 - Focus on the three **demonstration checklist items** and what is needed to pass the lab.
 
 > This guide is more detailed and prescriptive than the official manual, but it does **not replace** the manual.  
